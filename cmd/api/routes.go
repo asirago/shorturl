@@ -3,14 +3,16 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func (app *Application) routes() *http.ServeMux {
-	mux := http.NewServeMux()
+func (app *Application) routes() http.Handler {
+	r := chi.NewRouter()
 
-	mux.HandleFunc("/healthcheck", healthCheck)
+	r.Get("/healthcheck", healthCheck)
 
-	return mux
+	return r
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
