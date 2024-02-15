@@ -18,3 +18,8 @@ docker/run-and-rebuild:
 	@echo "rebuilding and running"
 	@make docker/rebuild
 	@make docker/run
+
+docker/purge:
+	@docker stop $$(docker ps -aq)
+	@docker rm $$(docker ps -aq)
+
