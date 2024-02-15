@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type Application struct {
+type application struct {
 	cfg Configuration
 }
 
@@ -21,7 +21,7 @@ func main() {
 	pflag.IntVar(&cfg.Port, "port", 8080, "HTTP port")
 	pflag.Parse()
 
-	app := Application{
+	app := application{
 		cfg: cfg,
 	}
 
