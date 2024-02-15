@@ -1,0 +1,12 @@
+services:
+  api:
+    container_name: api
+    build: .
+    ports:
+      - "8080:8080"
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
