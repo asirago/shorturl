@@ -27,7 +27,11 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	rdb := database.CreateRedisClient()
 
-	app.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	if input.CustomShortURL == "" {
 		input.CustomShortURL = uuid.New().String()
@@ -36,7 +40,7 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Check if CustomShortURL is already in use
 
-	err := rdb.Set(context.Background(), input.CustomShortURL, input.URL, 0).Err()
+	err = rdb.Set(context.Background(), input.CustomShortURL, input.URL, 0).Err()
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

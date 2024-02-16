@@ -7,19 +7,13 @@ run:
 
 docker/rebuild:
 	@echo "rebuilding..."
-	@-docker stop shorturl > /dev/null 2>&1 || true
-	@-docker rm shorturl > /dev/null 2>&1 || true
-	@docker build --tag shorturl . > /dev/null 2>&1 || true
+	@docker compose up --build
  	
 docker/run:
-	@docker run --name shorturl shorturl
-
-docker/run-and-rebuild:
-	@echo "rebuilding and running"
-	@make docker/rebuild
-	@make docker/run
+	@docker compose up
 
 docker/purge:
 	@docker stop $$(docker ps -aq)
 	@docker rm $$(docker ps -aq)
+	@docker rmi $$(docker images -q)
 

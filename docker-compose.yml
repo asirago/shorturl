@@ -1,6 +1,6 @@
 services:
   api:
-    container_name: api
+    container_name: shorturl-api
     build: .
     ports:
       - "8080:8080"
