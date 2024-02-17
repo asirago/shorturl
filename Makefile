@@ -23,3 +23,8 @@ docker/purge:
 	@docker rm shorturl-api redis
 	@docker rmi shorturl-api redis
 
+.PHONY purge/all:
+purge/all:
+	@-docker stop $$(docker ps -aq)
+	@-docker rm $$(docker ps -aq)
+	@-docker rmi $$(docker images)

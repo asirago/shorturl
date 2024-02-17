@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -57,14 +56,14 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		resp.CustomShortURL = uuid.NewString()[:8]
+		err = rdb.Set(context.Background(), resp.CustomShortURL, req.URL, 0).Err()
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
+	host := r.RemoteAddr
 	rateLimit, err := rdb.Get(ctx, host).Int()
 	if err == redis.Nil {
 		rdb.Set(ctx, host, url_quota-1, rateLimitDuration).Err()
@@ -81,7 +80,7 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		rateLimit = int(rateLimit64)
 	}
 
-	if rateLimit <= 0 {
+	if rateLimit < 0 {
 		ttl, err := rdb.TTL(ctx, host).Result()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
