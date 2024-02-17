@@ -8,8 +8,10 @@ run:
 
 .PHONY docker/rebuild:
 docker/rebuild:
+	@echo "purging..."
+	-make docker/purge
 	@echo "rebuilding..."
-	@docker compose up --build
+	docker compose up --build
  	
 .PHONY docker/run:
 docker/run:
@@ -17,7 +19,7 @@ docker/run:
 
 .PHONY docker/purge:
 docker/purge:
-	@docker stop $$(docker ps -aq)
-	@docker rm $$(docker ps -aq)
-	@docker rmi $$(docker images -q)
+	@docker stop shorturl-api redis
+	@docker rm shorturl-api redis
+	@docker rmi shorturl-api redis
 

@@ -40,6 +40,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
+	r.Body.Close()
 
 	err := dec.Decode(dst)
 	if err != nil {
