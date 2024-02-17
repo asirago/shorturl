@@ -18,25 +18,45 @@ type request struct {
 }
 
 type response struct {
-	URL            string        `json:"url"`
-	CustomShortURL string        `json:"custom_short_url"`
-	Expiry         time.Duration `json:"expiry"`
-	RateLimit      int           `json:"rate_limit"`
+	URL            string `json:"url"`
+	CustomShortURL string `json:"custom_short_url"`
+	RateLimit      int    `json:"rate_limit"`
 }
 
 func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
-	input := request{}
+	req := request{}
+	resp := response{}
 	ctx := context.Background()
 	url_quota := 5
 	rateLimitDuration := 24 * time.Hour
 
 	rdb := database.CreateRedisClient()
 
-	err := app.readJSON(w, r, &input)
+	err := app.readJSON(w, r, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	if req.CustomShortURL != "" {
+		_, err := rdb.Get(ctx, req.CustomShortURL).Result()
+		if err == redis.Nil {
+			err = rdb.Set(context.Background(), req.CustomShortURL, req.URL, 0).Err()
+			if err != nil {
+				fmt.Println(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			resp.CustomShortURL = req.CustomShortURL
+		} else if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		} else {
+			http.Error(w, "Short custom url already taken", http.StatusConflict)
+			return
+		}
+	} else {
+		resp.CustomShortURL = uuid.NewString()[:8]
 	}
 
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -78,27 +98,13 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: Check if CustomShortURL is already in use
-	if input.CustomShortURL == "" {
-		input.CustomShortURL = uuid.New().String()[:6]
-	}
-
-	err = rdb.Set(context.Background(), input.CustomShortURL, input.URL, 0).Err()
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
-
-	resp := response{
-		URL:            input.URL,
-		CustomShortURL: input.CustomShortURL,
-		RateLimit:      rateLimit,
-	}
+	resp.URL = req.URL
+	resp.RateLimit = rateLimit
 
 	err = app.writeJSON(w, r, http.StatusCreated, resp, nil)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 }
