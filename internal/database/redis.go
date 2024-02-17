@@ -3,14 +3,20 @@ package database
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/redis/go-redis/v9"
 )
 
 func CreateRedisClient() *redis.Client {
+	addr := "redis:6379"
+
+	if os.Getenv("INTEGRATION") != "" {
+		addr = "localhost:6379"
+	}
 
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     addr,
 		Password: "",
 	})
 
