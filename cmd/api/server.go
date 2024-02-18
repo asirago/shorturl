@@ -11,11 +11,11 @@ import (
 	"time"
 )
 
-func (app *application) serve() error {
+func (s *Server) serve() error {
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.cfg.Port),
-		Handler:      app.routes(),
+		Handler:      s.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
@@ -26,9 +26,9 @@ func (app *application) serve() error {
 	go func() {
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		s := <-quit
+		sig := <-quit
 
-		fmt.Printf("caught signal: %s", s.String())
+		fmt.Printf("caught signal: %s", sig.String())
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -44,7 +44,7 @@ func (app *application) serve() error {
 
 	}()
 
-	fmt.Printf("starting server on port :%d\n", app.cfg.Port)
+	fmt.Printf("starting server on port %v\n", srv.Addr)
 
 	err := srv.ListenAndServe()
 	if !errors.Is(err, http.ErrServerClosed) {
@@ -56,7 +56,7 @@ func (app *application) serve() error {
 		return nil
 	}
 
-	fmt.Printf("stoped server on port :%d\n", app.cfg.Port)
+	fmt.Printf("stoped server on port %v\n", srv.Addr)
 
 	return nil
 

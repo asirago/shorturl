@@ -22,7 +22,8 @@ type response struct {
 	RateLimit      int    `json:"rate_limit"`
 }
 
-func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
+// TODO: REFACTOR
+func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	req := request{}
 	resp := response{}
@@ -32,7 +33,7 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	rdb := database.CreateRedisClient()
 
-	err := app.readJSON(w, r, &req)
+	err := s.readJSON(w, r, &req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -100,7 +101,7 @@ func (app *application) shortenUrl(w http.ResponseWriter, r *http.Request) {
 	resp.URL = req.URL
 	resp.RateLimit = rateLimit
 
-	err = app.writeJSON(w, r, http.StatusCreated, resp, nil)
+	err = s.writeJSON(w, r, http.StatusCreated, resp, nil)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)

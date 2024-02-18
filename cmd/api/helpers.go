@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func (app *application) writeJSON(
+func (s *Server) writeJSON(
 	w http.ResponseWriter,
 	r *http.Request,
 	status int,
@@ -34,7 +34,7 @@ func (app *application) writeJSON(
 	return nil
 }
 
-func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+func (s *Server) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	maxBytes := 1_048_576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 

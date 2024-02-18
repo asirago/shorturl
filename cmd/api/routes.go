@@ -7,16 +7,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (app *application) routes() http.Handler {
+func (s *Server) routes() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/healthcheck", app.healthCheck)
+	r.Use(s.Logger)
+	r.Get("/healthcheck", s.healthCheck)
 
-	r.Post("/shorten-url", app.shortenUrl)
+	r.Post("/shorten-url", s.shortenUrl)
 	return r
 }
 
-func (app *application) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 
 	data := map[string]string{
 		"version":     "1.0.0",

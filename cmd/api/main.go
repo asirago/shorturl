@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/pflag"
 )
 
-type application struct {
-	cfg Configuration
+type Server struct {
+	config Config
 }
 
 type Configuration struct {
@@ -23,9 +23,11 @@ func main() {
 
 	app := application{
 		cfg: cfg,
+	s := Server{
+		config: cfg,
 	}
 
-	err := app.serve()
+	err := s.serve()
 	if err != nil {
 		fmt.Println("server exited with error", err)
 	}

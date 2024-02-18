@@ -28,9 +28,9 @@ func TestShortenUrl(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	var app *application
+	var s *Server
 
-	app.shortenUrl(rr, r)
+	s.shortenUrl(rr, r)
 
 	if rr.Code != http.StatusCreated {
 		t.Fatalf("got %v, wanted %v", rr.Code, http.StatusCreated)
@@ -57,7 +57,7 @@ func TestShortenUrlSameCustomURL(t *testing.T) {
 
 		rr := httptest.NewRecorder()
 
-		var app *application
+		var app *Server
 
 		app.shortenUrl(rr, r)
 
@@ -94,7 +94,7 @@ func TestShortenUrlRateLimit(t *testing.T) {
 		r.RemoteAddr = "127.0.0.1"
 		rr := httptest.NewRecorder()
 
-		var app *application
+		var app *Server
 
 		app.shortenUrl(rr, r)
 
