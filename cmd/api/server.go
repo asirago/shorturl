@@ -7,14 +7,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
 
 func (s *Server) serve() error {
 
+	var addr string = fmt.Sprintf("localhost:%d", s.config.Port)
+	if s.config.Environment == "production" {
+		addr = fmt.Sprintf(":%v", strings.Split(addr, ":")[1])
+	}
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", app.cfg.Port),
+		Addr:         addr,
 		Handler:      s.routes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
