@@ -2,28 +2,48 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"log/slog"
+	"os"
 
 	"github.com/spf13/pflag"
 )
 
 type Server struct {
 	config Config
+	logger *slog.Logger
 }
 
-type Configuration struct {
-	Port int
+type Config struct {
+	Port        int
+	LogToFile   string
+	Environment string
+	Output      io.Writer
 }
 
 func main() {
 
-	var cfg Configuration
+	var cfg Config
+
+	cfg.Output = os.Stdout
 
 	pflag.IntVar(&cfg.Port, "port", 8080, "HTTP port")
+	pflag.StringVar(&cfg.Environment, "environment", "development", "development|production")
+	pflag.StringVar(&cfg.LogToFile, "logFile", "", "Log to File")
 	pflag.Parse()
 
-	app := application{
-		cfg: cfg,
+	if cfg.LogToFile != "" {
+		f, err := os.OpenFile(cfg.LogToFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			panic(err)
+		}
+		mw := io.MultiWriter(os.Stdout, f)
+		cfg.Output = mw
+		defer f.Close()
+	}
+
 	s := Server{
+		logger: NewLogger(cfg.Output),
 		config: cfg,
 	}
 
