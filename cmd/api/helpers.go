@@ -11,9 +11,8 @@ import (
 
 func (s *Server) writeJSON(
 	w http.ResponseWriter,
-	r *http.Request,
 	status int,
-	data interface{},
+	data any,
 	headers http.Header,
 ) error {
 	js, err := json.Marshal(data)

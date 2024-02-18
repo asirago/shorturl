@@ -10,6 +10,8 @@ import (
 func (s *Server) routes() http.Handler {
 	r := chi.NewRouter()
 
+	r.NotFound(s.notFoundResponse)
+
 	r.Use(s.Logger)
 	r.Get("/healthcheck", s.healthCheck)
 

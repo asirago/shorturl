@@ -35,8 +35,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	err := s.readJSON(w, r, &req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		s.badRequestResponse(w, err)
 	}
 
 	if req.CustomShortURL != "" {
@@ -44,8 +43,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		if err == redis.Nil {
 			err = rdb.Set(context.Background(), req.CustomShortURL, req.URL, 0).Err()
 			if err != nil {
-				fmt.Println(err)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				s.serverErrorResponse(w, err)
 			}
 			resp.CustomShortURL = req.CustomShortURL
 		} else if err != nil {
@@ -59,8 +57,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		resp.CustomShortURL = uuid.NewString()[:8]
 		err = rdb.Set(context.Background(), resp.CustomShortURL, req.URL, 0).Err()
 		if err != nil {
-			fmt.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			s.serverErrorResponse(w, err)
 		}
 	}
 
@@ -70,13 +67,11 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		rdb.Set(ctx, host, url_quota-1, rateLimitDuration).Err()
 		rateLimit = url_quota - 1
 	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		s.serverErrorResponse(w, err)
 	} else {
 		rateLimit64, err := rdb.Decr(ctx, host).Result()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			s.serverErrorResponse(w, err)
 		}
 		rateLimit = int(rateLimit64)
 	}
@@ -84,8 +79,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 	if rateLimit < 0 {
 		ttl, err := rdb.TTL(ctx, host).Result()
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			s.serverErrorResponse(w, err)
 		}
 		http.Error(
 			w,
@@ -101,10 +95,9 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 	resp.URL = req.URL
 	resp.RateLimit = rateLimit
 
-	err = s.writeJSON(w, r, http.StatusCreated, resp, nil)
+	err = s.writeJSON(w, http.StatusCreated, resp, nil)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.serverErrorResponse(w, err)
 	}
 
 }
