@@ -28,3 +28,12 @@ purge/all:
 	@-docker stop $$(docker ps -aq)
 	@-docker rm $$(docker ps -aq)
 	@-docker rmi $$(docker images)
+
+.PHONY integration/test:
+integration/test:
+	@-docker stop redis > /dev/null 
+	@-docker rm redis > /dev/null
+	@docker run --detach --name redis -p 6379:6379 redis > /dev/null
+	INTEGRATION=1 go test -count=1 -v ./...
+
+

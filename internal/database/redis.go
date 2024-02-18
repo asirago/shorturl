@@ -8,6 +8,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+var Ctx = context.Background()
+
 func CreateRedisClient() *redis.Client {
 	addr := "redis:6379"
 
@@ -20,7 +22,7 @@ func CreateRedisClient() *redis.Client {
 		Password: "",
 	})
 
-	_, err := rdb.Ping(context.Background()).Result()
+	_, err := rdb.Ping(Ctx).Result()
 	if err != nil {
 		log.Fatalf("Error Initializing redis: %v\n", err)
 	}

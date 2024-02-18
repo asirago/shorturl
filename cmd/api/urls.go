@@ -27,7 +27,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 
 	req := request{}
 	resp := response{}
-	ctx := context.Background()
+	ctx := database.Ctx
 	url_quota := 5
 	rateLimitDuration := 24 * time.Hour
 
