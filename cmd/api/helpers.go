@@ -39,7 +39,7 @@ func (s *Server) readJSON(w http.ResponseWriter, r *http.Request, dst any) error
 
 	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
-	r.Body.Close()
+	defer r.Body.Close()
 
 	err := dec.Decode(dst)
 	if err != nil {
