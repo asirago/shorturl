@@ -16,6 +16,7 @@ func (s *Server) routes() http.Handler {
 	r.Get("/healthcheck", s.healthCheck)
 
 	r.Post("/shorten-url", s.shortenUrl)
+	r.Get("/{url}", s.resolveUrl)
 	return r
 }
 

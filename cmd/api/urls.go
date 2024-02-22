@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/asirago/shorturl/internal/database"
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -20,6 +21,26 @@ type response struct {
 	URL            string `json:"url"`
 	CustomShortURL string `json:"custom_short_url"`
 	RateLimit      int    `json:"rate_limit"`
+}
+
+func (s *Server) resolveUrl(w http.ResponseWriter, r *http.Request) {
+	url := chi.URLParam(r, "url")
+
+	rdb := database.CreateRedisClient()
+
+	longUrl, err := rdb.Get(database.Ctx, url).Result()
+	if err == redis.Nil {
+		s.errorJSON(w, http.StatusNotFound, fmt.Sprintf("/%s does not exist", url))
+		return
+	} else if err != nil {
+		s.serverErrorResponse(w, err)
+		return
+	}
+
+	err = s.writeJSON(w, http.StatusMovedPermanently, map[string]string{"url": longUrl}, nil)
+	if err != nil {
+		s.serverErrorResponse(w, err)
+	}
 }
 
 // TODO: REFACTOR
@@ -36,6 +57,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 	err := s.readJSON(w, r, &req)
 	if err != nil {
 		s.badRequestResponse(w, err)
+		return
 	}
 
 	if req.CustomShortURL != "" {
