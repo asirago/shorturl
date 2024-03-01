@@ -18,9 +18,9 @@ type request struct {
 }
 
 type response struct {
-	URL            string `json:"url"`
-	CustomShortURL string `json:"custom_short_url"`
-	RateLimit      int    `json:"rate_limit"`
+	URL       string `json:"url"`
+	ShortURL  string `json:"short_url"`
+	RateLimit int    `json:"rate_limit"`
 }
 
 func (s *Server) resolveUrl(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +67,7 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				s.serverErrorResponse(w, err)
 			}
-			resp.CustomShortURL = req.CustomShortURL
+			resp.ShortURL = req.CustomShortURL
 		} else if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -76,8 +76,8 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		resp.CustomShortURL = uuid.NewString()[:8]
-		err = rdb.Set(context.Background(), resp.CustomShortURL, req.URL, 0).Err()
+		resp.ShortURL = uuid.NewString()[:8]
+		err = rdb.Set(context.Background(), resp.ShortURL, req.URL, 0).Err()
 		if err != nil {
 			s.serverErrorResponse(w, err)
 		}
