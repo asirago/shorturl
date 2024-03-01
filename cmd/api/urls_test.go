@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func TestShortenUrl(t *testing.T) {
@@ -103,5 +106,41 @@ func TestShortenUrlRateLimit(t *testing.T) {
 				t.Fatalf("got %d, want %d\n", rr.Code, http.StatusServiceUnavailable)
 			}
 		}
+	}
+}
+
+func TestResolveUrlThatDoesNotExist(t *testing.T) {
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("skipping integration tests")
+	}
+
+	testUrl := "/abcd"
+	wantErr := fmt.Sprintf("%s does not exist", testUrl)
+
+	var s *Server
+	router := chi.NewRouter()
+	router.Get("/{url}", s.resolveUrl)
+
+	r, _ := http.NewRequest(http.MethodGet, testUrl, nil)
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, r)
+
+	if rr.Code != http.StatusNotFound {
+		t.Errorf("want %d, but got %d", http.StatusNotFound, rr.Code)
+	}
+
+	var resp struct {
+		Error string `json:"error"`
+	}
+
+	js := json.NewDecoder(rr.Body)
+	err := js.Decode(&resp)
+	if err != nil {
+		t.Fatal("could not decode json")
+	}
+
+	if resp.Error != wantErr {
+		t.Errorf(wantErr)
 	}
 }
