@@ -13,9 +13,7 @@ import (
 )
 
 func TestShortenUrl(t *testing.T) {
-	if os.Getenv("INTEGRATION") == "" {
-		t.Skip("skipping integration tests")
-	}
+	integrationTest(t)
 
 	var request struct {
 		URL            string `json:"url"`
@@ -41,9 +39,7 @@ func TestShortenUrl(t *testing.T) {
 }
 
 func TestShortenUrlSameCustomURL(t *testing.T) {
-	if os.Getenv("INTEGRATION") == "" {
-		t.Skip("skipping integration tests")
-	}
+	integrationTest(t)
 
 	var request struct {
 		URL            string `json:"url"`
@@ -110,9 +106,7 @@ func TestShortenUrlRateLimit(t *testing.T) {
 }
 
 func TestResolveUrlThatDoesNotExist(t *testing.T) {
-	if os.Getenv("INTEGRATION") == "" {
-		t.Skip("skipping integration tests")
-	}
+	integrationTest(t)
 
 	testUrl := "/abcd"
 	wantErr := fmt.Sprintf("%s does not exist", testUrl)
@@ -143,4 +137,12 @@ func TestResolveUrlThatDoesNotExist(t *testing.T) {
 	if resp.Error != wantErr {
 		t.Errorf(wantErr)
 	}
+}
+
+func integrationTest(t *testing.T) {
+	t.Helper()
+	if os.Getenv("INTEGRATION") == "" {
+		t.Skip("skipping integration tests: set environment variable INTEGRATION")
+	}
+
 }
