@@ -139,6 +139,58 @@ func TestResolveUrlThatDoesNotExist(t *testing.T) {
 	}
 }
 
+func TestResolveUrlExists(t *testing.T) {
+	integrationTest(t)
+
+	// set up chi router
+	var s *Server
+	router := chi.NewRouter()
+	router.Post("/shorten-url", s.shortenUrl)
+	router.Get("/{url}", s.resolveUrl)
+
+	// Shorten url
+	var request struct {
+		URL            string `json:"url"`
+		CustomShortURL string `json:"custom_short_url"`
+	}
+	request.URL = "https://google.se"
+
+	b, _ := json.Marshal(request)
+
+	r, _ := http.NewRequest(http.MethodPost, "/shorten-url", bytes.NewBuffer(b))
+	rr := httptest.NewRecorder()
+
+	router.ServeHTTP(rr, r)
+
+	var resp struct {
+		URL      string `json:"url"`
+		ShortURL string `json:"short_url"`
+	}
+	js := json.NewDecoder(rr.Body)
+	err := js.Decode(&resp)
+	if err != nil {
+		t.Fatal("could not decode json response")
+	}
+
+	r, _ = http.NewRequest(http.MethodGet, fmt.Sprintf("/%s", resp.ShortURL), nil)
+	rr = httptest.NewRecorder()
+
+	router.ServeHTTP(rr, r)
+
+	var resp2 struct {
+		URL string `json:"url"`
+	}
+
+	err = json.NewDecoder(rr.Body).Decode(&resp2)
+	if err != nil {
+		t.Fatal("could not decore json response")
+	}
+
+	if resp.URL != resp2.URL {
+		t.Errorf("want %s, but got %s", resp.URL, resp2.URL)
+	}
+}
+
 func integrationTest(t *testing.T) {
 	t.Helper()
 	if os.Getenv("INTEGRATION") == "" {
