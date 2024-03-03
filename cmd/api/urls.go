@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/asirago/shorturl/internal/database"
@@ -57,6 +60,13 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 	err := s.readJSON(w, r, &req)
 	if err != nil {
 		s.badRequestResponse(w, err)
+		return
+	}
+
+	// validate url
+	req.URL, err = cleanURL(req.URL)
+	if err != nil {
+		s.errorJSON(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -122,4 +132,55 @@ func (s *Server) shortenUrl(w http.ResponseWriter, r *http.Request) {
 		s.serverErrorResponse(w, err)
 	}
 
+}
+
+func cleanURL(longURL string) (string, error) {
+	var cleanURL string
+
+	r := regexp.MustCompile(`^(\w+)://`)
+
+	// force url scheme by adding https
+	if !r.MatchString(longURL) {
+		longURL = fmt.Sprintf("https://%s", longURL)
+	}
+
+	// invalidate urls with script tags
+	if strings.Contains(longURL, "<script>") {
+		return "", fmt.Errorf("<script> forbidden")
+	}
+
+	// remove trailing /
+	longURL = strings.TrimSuffix(longURL, "/")
+
+	// parse url
+	u, err := url.Parse(longURL)
+	if err != nil {
+		return "", err
+	} else if u.Host == "" {
+		return "", fmt.Errorf("%s is not a valid url", longURL)
+	}
+
+	if u.IsAbs() && u.Scheme != "https" {
+		return "", fmt.Errorf("%s scheme not allowed, only supports https scheme", u.Scheme)
+	}
+
+	cleanURL = fmt.Sprintf("https://%s%s", u.Host, u.EscapedPath())
+
+	if (*u).RawQuery != "" {
+		cleanURL = fmt.Sprintf(
+			"%s?%s",
+			cleanURL,
+			url.QueryEscape(u.RawQuery),
+		)
+	}
+
+	if (*u).RawFragment != "" || (*u).Fragment != "" {
+		cleanURL = fmt.Sprintf(
+			"%s#%s",
+			cleanURL,
+			u.EscapedFragment(),
+		)
+	}
+
+	return cleanURL, nil
 }
