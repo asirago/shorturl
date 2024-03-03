@@ -75,9 +75,7 @@ func TestShortenUrlSameCustomURL(t *testing.T) {
 }
 
 func TestShortenUrlRateLimit(t *testing.T) {
-	if os.Getenv("INTEGRATION") == "" {
-		t.Skip("skipping integration tests")
-	}
+	integrationTest(t)
 
 	var request struct {
 		URL            string `json:"url"`
@@ -188,6 +186,84 @@ func TestResolveUrlExists(t *testing.T) {
 
 	if resp.URL != resp2.URL {
 		t.Errorf("want %s, but got %s", resp.URL, resp2.URL)
+	}
+}
+
+func TestCleanUrl(t *testing.T) {
+	testCases := []struct {
+		name    string
+		testUrl string
+		wantUrl string
+		wantErr string
+	}{
+		{
+			"Url",
+			"https://google.se",
+			"https://google.se",
+			"",
+		},
+		{
+			"UrlWithSubdomain",
+			"https://www.tinkaling.asirago.xyz",
+			"https://www.tinkaling.asirago.xyz",
+			"",
+		},
+		{
+			"UrlWithPaths",
+			"https://facebook.com/foo/bar",
+			"https://facebook.com/foo/bar",
+			"",
+		},
+		{
+			"UrlWithDoubleExtensionTopLevelDomain",
+			"https://amazon.co.uk",
+			"https://amazon.co.uk",
+			"",
+		},
+		{
+			"UrlWithHttpScheme",
+			"https://amazon.com",
+			"https://amazon.com",
+			"http scheme not allowed, only supports https scheme",
+		},
+		{
+			"UrlWithQueryParameters",
+			"amazon.co.uk/foo/bar?color=blue&colour=green",
+			"https://amazon.co.uk/foo/bar?color%3Dblue%26colour%3Dgreen",
+			"",
+		},
+		{
+			"UrlWithTrailingSlash",
+			"https://example.com/foo/bar/",
+			"https://example.com/foo/bar",
+			"<script> forbidden",
+		},
+		{
+			"UrlWithScriptTag",
+			"example.com/<script>alert('XSS')</script>",
+			"",
+			"<script> forbidden",
+		},
+		{
+			"UrlWithFragment",
+			"example.com/foo/bar?color=green#hello",
+			"https://example.com/foo/bar?color%3Dgreen#hello",
+			"",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gotUrl, err := cleanURL(tc.testUrl)
+			if err != nil && err.Error() != tc.wantErr {
+				t.Errorf("want %s, but got %s", tc.wantErr, err.Error())
+			}
+
+			if tc.wantUrl != gotUrl {
+				t.Errorf("want %s, but got %s", tc.wantUrl, gotUrl)
+			}
+
+		})
 	}
 }
 
