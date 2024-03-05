@@ -14,8 +14,8 @@ import (
 
 func (s *Server) serve() error {
 
-	var addr string = fmt.Sprintf("localhost:%d", s.config.Port)
-	if s.config.Environment == "production" {
+	var addr string = fmt.Sprintf("localhost:%d", s.cfg.Port)
+	if s.cfg.Environment == "production" {
 		addr = fmt.Sprintf(":%v", strings.Split(addr, ":")[1])
 	}
 	srv := &http.Server{

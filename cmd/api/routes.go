@@ -25,7 +25,7 @@ func (s *Server) healthCheck(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
 		"version":     "1.0.0",
 		"status":      "available",
-		"environment": s.config.Environment,
+		"environment": s.cfg.Environment,
 	}
 
 	json, err := json.MarshalIndent(data, "", "  ")
