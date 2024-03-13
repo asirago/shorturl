@@ -2,7 +2,13 @@ name: Build and Test
 
 on:
   push:
+    paths:
+      - server/**
     branches: [main]
+
+defaults:
+  run:
+    working-directory: ./server
 
 jobs:
   Test:
